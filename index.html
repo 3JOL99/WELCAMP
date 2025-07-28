@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <title>WELCAMP - Foto directe a Drive</title>
+  <style>
+    body { font-family: sans-serif; max-width: 400px; margin: 2rem auto; text-align: center; }
+    button { font-size: 1.2rem; padding: 0.8rem 1.2rem; }
+    #status { margin-top: 1rem; color: green; }
+  </style>
+</head>
+<body>
+  <h1>📸 Fes una foto per WELCAMP</h1>
+  <input type="file" accept="image/*" capture="environment" id="cameraInput" style="display:none;" />
+  <button id="startBtn">Fes una foto</button>
+  <p id="status"></p>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0_oy0FSnctJ_82-BD99zsyajRYh4DMmH6QpPsSLrKaZ4r-xLClmO5ieoBRN94UenG/exec'; // Canvia-ho per la teva URL Apps Script
+    const cameraInput = document.getElementById('cameraInput');
+    const startBtn = document.getElementById('startBtn');
+    const status = document.getElementById('status');
+
+    startBtn.addEventListener('click', () => {
+      status.textContent = '';
+      cameraInput.click();
+    });
+
+    cameraInput.addEventListener('change', () => {
+      const file = cameraInput.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const base64 = evt.target.result.split(',')[1]; // Traiem el prefix
+        status.textContent = 'Pujant...';
+
+        fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: new URLSearchParams({
+            data: base64,
+            type: file.type,
+            name: file.name
+          })
+        })
+        .then(res => res.text())
+        .then(text => {
+          status.textContent = text === 'Pujada OK' ? 'Foto pujada correctament! 🎉' : text;
+          cameraInput.value = '';
+        })
+        .catch(err => {
+          status.textContent = 'Error: ' + err.message;
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>
